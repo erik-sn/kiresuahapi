@@ -1,0 +1,11 @@
+settings.py
+db.sqlite3
+manage.py
+
+;;extensions to ignore
+*.log
+*.pot
+*.pyc
+
+;;directories to ignore
+.idea/
