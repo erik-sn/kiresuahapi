@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User, Group
-from api.models import ToDo, Markup
+from api.models import ToDo, Markup, PortfolioMessage
 from rest_framework import serializers
 
 
@@ -25,3 +25,9 @@ class MarkupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Markup
         fields = ('id', 'title', 'description', 'text', 'created', 'user', 'modified')
+
+
+class PortfolioMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortfolioMessage
+        fields = ('name', 'email', 'phoneNumber', 'message', 'created', 'modified')

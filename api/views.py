@@ -6,8 +6,8 @@ from django.contrib.auth.models import User, Group
 from django.http import HttpResponse
 from rest_framework import viewsets, generics
 
-from api.serialzers import UserSerializer, GroupSerializer, ToDoSerializer, MarkupSerializer
-from api.models import ToDo, Markup
+from api.serialzers import UserSerializer, GroupSerializer, ToDoSerializer, MarkupSerializer, PortfolioMessageSerializer
+from api.models import ToDo, Markup, PortfolioMessage
 from kiresuahapi.settings import GITHUB_MARKUP_CLIENT_SECRET as client_secret
 from kiresuahapi.settings import GITHUB_MARKUP_CLIENT_ID as client_id
 
@@ -53,7 +53,7 @@ class MarkupList(generics.ListCreateAPIView):
         2. GET - retrieve a list of objects
     """
     def get_queryset(self):
-        return Markup.objects.all().filter(user=self.kwargs['id'])
+        return Markup.objects.all().filter(user=self.kwargs['id']).order_by('-created')
     serializer_class = MarkupSerializer
 
 
@@ -66,6 +66,16 @@ class MarkupDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Markup.objects.all()
     serializer_class = MarkupSerializer
+
+
+class PortFolioMessageList(generics.ListCreateAPIView):
+    """
+    Method to handle requests with no pk specified:
+        1. POST - insert an object
+        2. GET - retrieve a list of objects
+    """
+    queryset = PortfolioMessage.objects.all()
+    serializer_class = PortfolioMessageSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
