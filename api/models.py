@@ -53,3 +53,28 @@ class PortfolioMessage(models.Model):
     def __str__(self):
         return 'Name: {} Email: {} Number: {} Message: {} Create Date: {}'\
             .format(self.name, self.email, self.phoneNumber, self.message, self.created)
+
+
+class Entry(models.Model):
+    id = models.AutoField(primary_key=True, db_column='id')
+    created = models.DateTimeField(blank=False, null=False, db_column='created')
+    modified = models.DateTimeField(blank=False, null=False, db_column='edited')
+    title = models.TextField(blank=False, null=False, db_column='title')
+    description = models.TextField(blank=True, null=True, db_column='description')
+    content = models.TextField(blank=True, null=True, db_column='content')
+    tags = models.ManyToManyField('Tag', blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'entries'
+
+
+class Tag(models.Model):
+    id = models.AutoField(primary_key=True, db_column='id')
+    created = models.DateTimeField(blank=False, null=False, db_column='created')
+    modified = models.DateTimeField(blank=False, null=False, db_column='edited')
+    name = models.TextField(blank=False, null=False, db_column='name')
+
+    class Meta:
+        managed = True
+        db_table = 'tags'

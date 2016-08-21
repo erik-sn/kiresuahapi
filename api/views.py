@@ -6,8 +6,9 @@ from django.contrib.auth.models import User, Group
 from django.http import HttpResponse
 from rest_framework import viewsets, generics
 
-from api.serialzers import UserSerializer, GroupSerializer, ToDoSerializer, MarkupSerializer, PortfolioMessageSerializer
-from api.models import ToDo, Markup, PortfolioMessage
+from api.serialzers import UserSerializer, GroupSerializer, ToDoSerializer, MarkupSerializer, \
+    PortfolioMessageSerializer, EntrySerializer, TagSerializer
+from api.models import ToDo, Markup, PortfolioMessage, Entry, Tag
 from kiresuahapi.settings import GITHUB_MARKUP_CLIENT_SECRET as client_secret
 from kiresuahapi.settings import GITHUB_MARKUP_CLIENT_ID as client_id
 
@@ -66,6 +67,50 @@ class MarkupDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Markup.objects.all()
     serializer_class = MarkupSerializer
+
+
+class EntryList(generics.ListCreateAPIView):
+    """
+    Method to handle requests with no pk specified:
+        1. POST - insert an object
+        2. GET - retrieve a list of objects
+    """
+    def get_queryset(self):
+        return Entry.objects.all().filter(user=self.kwargs['id']).order_by('-created')
+    serializer_class = EntrySerializer
+
+
+class EntryDetail(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Method to handle requests with a pk specified:
+        1. GET - one object
+        2. PUT - Inserts/Updates another object
+        3. DELETE - deletes one object
+    """
+    queryset = Entry.objects.all()
+    serializer_class = EntrySerializer
+
+
+class TagList(generics.ListCreateAPIView):
+    """
+    Method to handle requests with no pk specified:
+        1. POST - insert an object
+        2. GET - retrieve a list of objects
+    """
+    def get_queryset(self):
+        return Tag.objects.all().filter(user=self.kwargs['id']).order_by('-created')
+    serializer_class = TagSerializer
+
+
+class TagDetail(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Method to handle requests with a pk specified:
+        1. GET - one object
+        2. PUT - Inserts/Updates another object
+        3. DELETE - deletes one object
+    """
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
 
 
 class PortFolioMessageList(generics.ListCreateAPIView):

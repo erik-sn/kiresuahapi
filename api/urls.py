@@ -17,5 +17,11 @@ urlpatterns = [
     url(r'^(?i)markup/(?P<id>[0-9]+)/$', views.MarkupList.as_view(), name='markup_list'),
     url(r'^(?i)markup/(?P<id>[0-9]+)/(?P<pk>[0-9]+)/$', views.MarkupDetail.as_view(), name='markup_get_post_put'),
 
+    url(r'^(?i)entry/$', views.EntryList.as_view(), name='entry_list'),
+    url(r'^(?i)entry/(?P<pk>[0-9]+)/$', views.EntryDetail.as_view(), name='entry_get_post_put'),
+
+    url(r'^(?i)tag/(?P<id>[0-9]+)/$', views.TagList.as_view(), name='tag_list'),
+    url(r'^(?i)tag/(?P<id>[0-9]+)/(?P<pk>[0-9]+)/$', views.TagDetail.as_view(), name='tag_get_post_put'),
+
     url(r'^(?i)message/$', views.PortFolioMessageList.as_view(), name='message_list'),
 ]
