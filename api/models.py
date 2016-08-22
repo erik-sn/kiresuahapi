@@ -63,7 +63,7 @@ class Entry(models.Model):
     title = models.TextField(blank=False, null=False, db_column='title')
     description = models.TextField(blank=True, null=True, db_column='description')
     content = models.TextField(blank=True, null=True, db_column='content')
-    tags = models.ManyToManyField('Tag', blank=True, null=True)
+    tags = models.ManyToManyField('Tag', blank=True)
 
     class Meta:
         managed = True
