@@ -5,6 +5,9 @@ import requests
 from django.contrib.auth.models import User, Group
 from django.http import HttpResponse
 from rest_framework import viewsets, generics
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
 from api.serialzers import UserSerializer, GroupSerializer, ToDoSerializer, MarkupSerializer, \
     PortfolioMessageSerializer, EntrySerializer, TagSerializer
@@ -69,48 +72,77 @@ class MarkupDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = MarkupSerializer
 
 
-class EntryList(generics.ListCreateAPIView):
+class EntryView(APIView):
     """
     Method to handle requests with no pk specified:
         1. POST - insert an object
         2. GET - retrieve a list of objects
     """
-    def get_queryset(self):
-        return Entry.objects.all().filter(user=self.kwargs['id']).order_by('-created')
-    serializer_class = EntrySerializer
+    def get_tag(self, name):
+        try:
+            return Tag.objects.get(name=name).id
 
+        except:
+            tag = Tag.objects.create(name=name)
+            tag.save()
+            return tag.id
 
-class EntryDetail(generics.RetrieveUpdateDestroyAPIView):
+    def get(self, request, format=None):
+        data = Entry.objects.all()
+        serializer = EntrySerializer(data, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        data = request.data
+        data['tags'] = [self.get_tag(tag) for tag in data['tags']]
+        serializer = EntrySerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, format=None):
+        data = request.data
+        data['tags'] = [self.get_tag(tag) for tag in data['tags']]
+        entry = Entry.objects.get(id=data['id'])
+        serializer = EntrySerializer(entry, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, format=None):
+        entry = Entry.objects.get(id=request.data['id'])
+        entry.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class EntryDetail(APIView):
     """
     Method to handle requests with a pk specified:
         1. GET - one object
         2. PUT - Inserts/Updates another object
         3. DELETE - deletes one object
     """
-    queryset = Entry.objects.all()
-    serializer_class = EntrySerializer
+    def put(self, request, format=None):
+        data = request.data
+        data['tags'] = [self.get_tag(tag) for tag in data['tags']]
+        serializer = EntrySerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TagList(generics.ListCreateAPIView):
+class TagList(APIView):
     """
     Method to handle requests with no pk specified:
         1. POST - insert an object
         2. GET - retrieve a list of objects
     """
-    def get_queryset(self):
-        return Tag.objects.all().filter(user=self.kwargs['id']).order_by('-created')
-    serializer_class = TagSerializer
-
-
-class TagDetail(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Method to handle requests with a pk specified:
-        1. GET - one object
-        2. PUT - Inserts/Updates another object
-        3. DELETE - deletes one object
-    """
-    queryset = Tag.objects.all()
-    serializer_class = TagSerializer
+    def get(self, request, format=None):
+        data = Tag.objects.all()
+        serializer = TagSerializer(data, many=True)
+        return Response(serializer.data)
 
 
 class PortFolioMessageList(generics.ListCreateAPIView):

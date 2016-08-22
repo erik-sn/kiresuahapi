@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import datetime
+from django.utils import timezone
 from django.contrib.auth.models import User
 
 
@@ -7,8 +8,8 @@ class ToDo(models.Model):
     id = models.AutoField(primary_key=True, db_column='id')
     title = models.TextField(blank=False, null=False, db_column='name')
     description = models.TextField(blank=True, null=True, db_column='description')
-    created = models.DateTimeField(default=datetime.now, blank=True, null=True, db_column='created')
-    modified = models.DateTimeField(default=datetime.now, blank=True, null=True, db_column='modified')
+    created = models.DateTimeField(default=timezone.now, blank=True, null=True, db_column='created')
+    modified = models.DateTimeField(default=timezone.now, blank=True, null=True, db_column='modified')
 
     class Meta:
         managed = True
@@ -25,8 +26,8 @@ class Markup(models.Model):
     title = models.TextField(blank=False, null=False, db_column='title')
     description = models.TextField(blank=True, null=True, db_column='description')
     text = models.TextField(blank=True, null=True, db_column='text')
-    created = models.DateTimeField(default=datetime.now, blank=True, null=True, db_column='created')
-    modified = models.DateTimeField(default=datetime.now, blank=True, null=True, db_column='modified')
+    created = models.DateTimeField(default=timezone.now, blank=True, null=True, db_column='created')
+    modified = models.DateTimeField(default=timezone.now, blank=True, null=True, db_column='modified')
 
     class Meta:
         managed = True
@@ -43,8 +44,8 @@ class PortfolioMessage(models.Model):
     email = models.TextField(blank=True, null=True, db_column='email')
     phoneNumber = models.TextField(blank=True, null=True, db_column='phonenumber')
     message = models.TextField(blank=True, null=True, db_column='message')
-    created = models.DateTimeField(default=datetime.now, blank=True, null=True, db_column='created')
-    modified = models.DateTimeField(default=datetime.now, blank=True, null=True, db_column='modified')
+    created = models.DateTimeField(default=timezone.now, blank=True, null=True, db_column='created')
+    modified = models.DateTimeField(default=timezone.now, blank=True, null=True, db_column='modified')
 
     class Meta:
         managed = True
@@ -57,8 +58,8 @@ class PortfolioMessage(models.Model):
 
 class Entry(models.Model):
     id = models.AutoField(primary_key=True, db_column='id')
-    created = models.DateTimeField(blank=False, null=False, db_column='created')
-    modified = models.DateTimeField(blank=False, null=False, db_column='edited')
+    created = models.DateTimeField(default=timezone.now, blank=False, null=False, db_column='created')
+    modified = models.DateTimeField(default=timezone.now, blank=False, null=False, db_column='edited')
     title = models.TextField(blank=False, null=False, db_column='title')
     description = models.TextField(blank=True, null=True, db_column='description')
     content = models.TextField(blank=True, null=True, db_column='content')
@@ -71,8 +72,8 @@ class Entry(models.Model):
 
 class Tag(models.Model):
     id = models.AutoField(primary_key=True, db_column='id')
-    created = models.DateTimeField(blank=False, null=False, db_column='created')
-    modified = models.DateTimeField(blank=False, null=False, db_column='edited')
+    created = models.DateTimeField(default=timezone.now, blank=False, null=False, db_column='created')
+    modified = models.DateTimeField(default=timezone.now, blank=False, null=False, db_column='edited')
     name = models.TextField(blank=False, null=False, db_column='name')
 
     class Meta:
