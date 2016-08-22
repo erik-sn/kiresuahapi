@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
-from api.serialzers import UserSerializer, GroupSerializer
+from api.serializers import UserSerializer, GroupSerializer
 
 def index(request):
     return HttpResponse("Hello, world. This is an api endpoint.")

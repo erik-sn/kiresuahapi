@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from api.serialzers import UserSerializer, GroupSerializer, ToDoSerializer, MarkupSerializer, \
+from api.serializers import UserSerializer, GroupSerializer, ToDoSerializer, MarkupSerializer, \
     PortfolioMessageSerializer, EntrySerializer, TagSerializer
 from api.models import ToDo, Markup, PortfolioMessage, Entry, Tag
 from kiresuahapi.settings import GITHUB_MARKUP_CLIENT_SECRET as client_secret

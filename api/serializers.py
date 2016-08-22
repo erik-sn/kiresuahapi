@@ -35,7 +35,7 @@ class EntrySerializer(serializers.ModelSerializer):
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Entry
+        model = Tag
         fields = ('id', 'created', 'modified', 'name')
 
 
