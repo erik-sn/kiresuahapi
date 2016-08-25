@@ -88,7 +88,7 @@ class EntryView(APIView):
             return tag.id
 
     def get(self, request, format=None):
-        data = Entry.objects.all()
+        data = Entry.objects.all().order_by('-created')
         serializer = EntrySerializer(data, many=True)
         return Response(serializer.data)
 
@@ -115,6 +115,7 @@ class EntryView(APIView):
         entry = Entry.objects.get(id=request.data['id'])
         entry.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class EntryDetail(APIView):
     """
