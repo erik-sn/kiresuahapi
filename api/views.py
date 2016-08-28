@@ -4,6 +4,7 @@ import requests
 
 from django.contrib.auth.models import User, Group
 from django.http import HttpResponse
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from rest_framework import viewsets, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -24,18 +25,34 @@ def auth(request, code):
     except:
         return HttpResponse(json.dumps({'error': 'cannot authenticate the user through github'}),
                             status=400, content_type="application/json")
-
     try:
         user = User.objects.get(id=AccessToken.objects.get(token=django_auth['access_token']).user_id)
+        django_auth['id'] = user.id
         django_auth['username'] = user.username
         django_auth['email'] = user.email
         django_auth['isAdmin'] = user.is_staff
     except:
+        django_auth['id'] = None
         django_auth['username'] = None
         django_auth['email'] = None
         django_auth['isAdmin'] = False
-
     return HttpResponse(json.dumps(django_auth), content_type="application/json")
+
+
+# curl -H "Authorization: Bearer <token>" -X POST -d "client_id=<client_id>"
+@csrf_exempt
+def revoke(request):
+    access_token = request.GET.get('access_token', None)
+    client_id = request.GET.get('client_id', None)
+    if client_id is not None and access_token is not None:
+        url = 'http://localhost:8000/invalidate-sessions'
+        data = {'client_id': client_id}
+        headers = {'Authorization': 'Bearer {}'.format(access_token)}
+        requests.post(url, data=data, headers=headers)
+        return HttpResponse(json.dumps({'message': 'User successfully logged out'}),
+                        status=200, content_type="application/json")
+    return HttpResponse(json.dumps({'error': 'client_id and access_token are required parameters'}),
+                        status=400, content_type="application/json")
 
 
 class ToDoList(generics.ListCreateAPIView):
@@ -83,10 +100,11 @@ class MarkupDetail(generics.RetrieveUpdateDestroyAPIView):
 
 class EntryView(APIView):
     """
-    Method to handle requests with no pk specified:
-        1. POST - insert an object
-        2. GET - retrieve a list of objects
+    Handling MSLT entries
     """
+    # defining queryset is necessary for Django model permissions
+    queryset = Entry.objects.none()
+
     def get_tag(self, name):
         try:
             return Tag.objects.get(name=name).id
@@ -152,6 +170,8 @@ class TagList(APIView):
         1. POST - insert an object
         2. GET - retrieve a list of objects
     """
+    queryset = Tag.objects.none()
+
     def get(self, request, format=None):
         data = Tag.objects.all()
         serializer = TagSerializer(data, many=True)

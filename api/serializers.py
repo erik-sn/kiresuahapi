@@ -3,13 +3,13 @@ from api.models import ToDo, Markup, PortfolioMessage, Entry, Tag
 from rest_framework import serializers
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('url', 'username', 'email', 'groups')
+        fields = ('username', 'email', 'groups')
 
 
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
+class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ('url', 'name')
@@ -28,9 +28,12 @@ class MarkupSerializer(serializers.ModelSerializer):
 
 
 class EntrySerializer(serializers.ModelSerializer):
+    owner = UserSerializer(many=False, read_only=True, context={'request': None})
+
     class Meta:
         model = Entry
-        fields = ('id', 'created', 'modified', 'title', 'description', 'content', 'tags')
+        depth = 1
+        fields = ('id', 'owner', 'created', 'modified', 'title', 'description', 'content', 'tags')
 
 
 class TagSerializer(serializers.ModelSerializer):

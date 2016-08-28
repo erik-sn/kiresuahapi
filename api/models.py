@@ -1,5 +1,4 @@
 from django.db import models
-from datetime import datetime
 from django.utils import timezone
 from django.contrib.auth.models import User
 
@@ -64,6 +63,7 @@ class Entry(models.Model):
     description = models.TextField(blank=True, null=True, db_column='description')
     content = models.TextField(blank=True, null=True, db_column='content')
     tags = models.ManyToManyField('Tag', blank=True)
+    owner = models.ForeignKey(User, blank=True, null=True, db_column='owner')
 
     class Meta:
         managed = True
