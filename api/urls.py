@@ -7,7 +7,6 @@ router.register(r'users', views.UserViewSet)
 router.register(r'groups', views.GroupViewSet)
 
 urlpatterns = [
-    url('', include('rest_framework_social_oauth2.urls')),
     url(r'^', include(router.urls)),
 
     url(r'^(?i)login/(?P<code>[a-zA-z0-9]+)/$', views.auth, name='login'),
@@ -22,4 +21,7 @@ urlpatterns = [
     url(r'^(?i)entry/$', views.EntryView.as_view(), name='entry_list'),
 
     url(r'^(?i)message/$', views.PortFolioMessageList.as_view(), name='message_list'),
+
+    url('', include('rest_framework_social_oauth2.urls')),
+
 ]
