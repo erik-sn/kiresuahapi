@@ -50,7 +50,7 @@ def revoke(request):
     access_token = request.GET.get('access_token', None)
     client_id = request.GET.get('client_id', None)
     if client_id is not None and access_token is not None:
-        url = 'https://kiresuah.me/api/invalidate-sessions/'.format(PORT)
+        url = 'https://kiresuah.me/api/invalidate-sessions/'
         data = {'client_id': client_id}
         headers = {'Authorization': 'Bearer {}'.format(access_token)}
         requests.post(url, data=data, headers=headers)
@@ -216,8 +216,8 @@ def github_auth(id, secret, code):
 
 
 def convert_auth_token(id, secret, backend, token):
-    url = 'http://kiresuah.me/api/convert-token/?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
-        .format(PORT, 'convert_token', id, secret, backend, token)
+    url = 'https://kiresuah.me/api/convert-token/?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
+        .format('convert_token', id, secret, backend, token)
     return requests.post(url).content
 
 
