@@ -207,6 +207,7 @@ def github_auth(id, secret, code):
         }),
         headers={'content-type': 'application/json'}
     ).content.decode('utf-8')
+    print(auth_response)
     token = re.search(r'access_token=([a-zA-Z0-9]+)', auth_response)
     if token is None:
         raise PermissionError(auth_response)
@@ -214,7 +215,7 @@ def github_auth(id, secret, code):
 
 
 def convert_auth_token(id, secret, backend, token):
-    url = 'https://localhost:{}/api/convert-token?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
+    url = 'http://localhost:{}/api/convert-token?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
         .format(PORT, 'convert_token', id, secret, backend, token)
     return requests.post(url).content
 
