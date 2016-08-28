@@ -20,7 +20,5 @@ urlpatterns = [
 
     url(r'^(?i)entry/$', views.EntryView.as_view(), name='entry_list'),
 
-    url(r'^(?i)tag/$', views.TagList.as_view(), name='tag_list'),
-
     url(r'^(?i)message/$', views.PortFolioMessageList.as_view(), name='message_list'),
 ]

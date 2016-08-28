@@ -6,7 +6,7 @@ from rest_framework import serializers
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('username', 'email', 'groups')
+        fields = ('id', 'username', 'email', 'groups')
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -33,6 +33,12 @@ class EntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Entry
         depth = 1
+        fields = ('id', 'owner', 'created', 'modified', 'title', 'description', 'content', 'tags')
+
+
+class EntryWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Entry
         fields = ('id', 'owner', 'created', 'modified', 'title', 'description', 'content', 'tags')
 
 

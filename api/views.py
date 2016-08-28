@@ -12,7 +12,7 @@ from rest_framework import status
 from oauth2_provider.models import AccessToken
 
 from api.serializers import UserSerializer, GroupSerializer, ToDoSerializer, MarkupSerializer, \
-    PortfolioMessageSerializer, EntrySerializer, TagSerializer
+    PortfolioMessageSerializer, EntrySerializer, EntryWriteSerializer, TagSerializer
 from api.models import ToDo, Markup, PortfolioMessage, Entry, Tag
 
 from kiresuahapi.settings import SOCIAL_AUTH_GITHUB_KEY as github_id, SOCIAL_AUTH_GITHUB_SECRET as github_secret
@@ -106,13 +106,17 @@ class EntryView(APIView):
     queryset = Entry.objects.none()
 
     def get_tag(self, name):
+        """
+        return the tag object given a tag name - if it does not exist then create it
+        :param name: tag name
+        :return: Tag object
+        """
         try:
-            return Tag.objects.get(name=name).id
-
+            return Tag.objects.get(name=name)
         except:
             tag = Tag.objects.create(name=name)
             tag.save()
-            return tag.id
+            return tag
 
     def get(self, request, format=None):
         data = Entry.objects.all().order_by('-created')
@@ -121,8 +125,11 @@ class EntryView(APIView):
 
     def post(self, request, format=None):
         data = request.data
-        data['tags'] = [self.get_tag(tag) for tag in data['tags']]
-        serializer = EntrySerializer(data=data)
+        if 'id' not in data or 'tags' not in data:
+            return Response({'error': 'The put request is malformed - id is a required field'}, status=status.HTTP_400_BAD_REQUEST)
+        # convert array of tag strings into tag id's
+        data['tags'] = [self.get_tag(tag).id for tag in data['tags']]
+        serializer = EntryWriteSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -133,9 +140,9 @@ class EntryView(APIView):
         if 'id' not in data or 'tags' not in data:
             return Response({'error': 'The put request is malformed - id is a required field'}, status=status.HTTP_400_BAD_REQUEST)
         # convert array of tag strings into tag id's
-        data['tags'] = [self.get_tag(tag) for tag in data['tags']] if 'tags' in data else []
+        data['tags'] = [self.get_tag(tag).id for tag in data['tags']] if 'tags' in data else []
         entry = Entry.objects.get(id=data['id'])
-        serializer = EntrySerializer(entry, data=data)
+        serializer = EntryWriteSerializer(entry, data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -145,37 +152,6 @@ class EntryView(APIView):
         entry = Entry.objects.get(id=request.data['id'])
         entry.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class EntryDetail(APIView):
-    """
-    Method to handle requests with a pk specified:
-        1. GET - one object
-        2. PUT - Inserts/Updates another object
-        3. DELETE - deletes one object
-    """
-    def put(self, request, format=None):
-        data = request.data
-        data['tags'] = [self.get_tag(tag) for tag in data['tags']]
-        serializer = EntrySerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class TagList(APIView):
-    """
-    Method to handle requests with no pk specified:
-        1. POST - insert an object
-        2. GET - retrieve a list of objects
-    """
-    queryset = Tag.objects.none()
-
-    def get(self, request, format=None):
-        data = Tag.objects.all()
-        serializer = TagSerializer(data, many=True)
-        return Response(serializer.data)
 
 
 class PortFolioMessageList(generics.ListCreateAPIView):
