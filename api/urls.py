@@ -9,7 +9,7 @@ router.register(r'groups', views.GroupViewSet)
 urlpatterns = [
     url(r'^', include(router.urls)),
 
-    url(r'^(?i)auth/(?P<code>[a-zA-Z0-9]+)/$', views.auth, name='auth'),
+    url(r'^(?i)login/(?P<code>[a-zA-z0-9]+)/$', views.auth, name='auth'),
 
     url(r'^(?i)todo/$', views.ToDoList.as_view()),
     url(r'^(?i)todo/(?P<pk>[0-9]+)/$', views.ToDoDetail.as_view()),
