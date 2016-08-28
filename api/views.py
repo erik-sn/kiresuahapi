@@ -18,7 +18,6 @@ from api.models import ToDo, Markup, PortfolioMessage, Entry, Tag
 from kiresuahapi.settings import SOCIAL_AUTH_GITHUB_KEY as github_id, SOCIAL_AUTH_GITHUB_SECRET as github_secret, PORT
 
 
-
 def auth(request, code):
     try:
         github_token = github_auth(github_id, github_secret, code)
@@ -40,13 +39,18 @@ def auth(request, code):
     return HttpResponse(json.dumps(django_auth), content_type="application/json")
 
 
-# curl -H "Authorization: Bearer <token>" -X POST -d "client_id=<client_id>"
 @csrf_exempt
 def revoke(request):
+    """
+    Given an access token, revoke that token and all other tokens associated with the user
+    :param request: HTTP request containing client_id and access_token
+    :return: JSON data indicating success or failure
+    """
+
     access_token = request.GET.get('access_token', None)
     client_id = request.GET.get('client_id', None)
     if client_id is not None and access_token is not None:
-        url = 'http://localhost:{}/invalidate-sessions'.format(PORT)
+        url = 'http://localhost:{}/api/invalidate-sessions'.format(PORT)
         data = {'client_id': client_id}
         headers = {'Authorization': 'Bearer {}'.format(access_token)}
         requests.post(url, data=data, headers=headers)
@@ -210,9 +214,10 @@ def github_auth(id, secret, code):
 
 
 def convert_auth_token(id, secret, backend, token):
-    url = 'http://localhost:{}/convert-token?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
+    url = 'https://localhost:{}/api/convert-token?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
         .format(PORT, 'convert_token', id, secret, backend, token)
     return requests.post(url).content
 
-def get_user_from_token(token, dict):
+
+def get_user_from_token(token):
     return User.objects.get(id=AccessToken.objects.get(token=token).user_id)
