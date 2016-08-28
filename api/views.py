@@ -50,7 +50,7 @@ def revoke(request):
     access_token = request.GET.get('access_token', None)
     client_id = request.GET.get('client_id', None)
     if client_id is not None and access_token is not None:
-        url = 'https://kiresuah.me/api/invalidate-sessions'.format(PORT)
+        url = 'https://kiresuah.me/api/invalidate-sessions/'.format(PORT)
         data = {'client_id': client_id}
         headers = {'Authorization': 'Bearer {}'.format(access_token)}
         requests.post(url, data=data, headers=headers)
@@ -199,7 +199,7 @@ def github_auth(id, secret, code):
     """
     # try:
     auth_response = requests.post(
-        'https://github.com/login/oauth/access_token',
+        'https://github.com/login/oauth/access_token/',
         data=json.dumps({
             'client_id': id,
             'client_secret': secret,
@@ -209,13 +209,14 @@ def github_auth(id, secret, code):
     ).content.decode('utf-8')
     print(auth_response)
     token = re.search(r'access_token=([a-zA-Z0-9]+)', auth_response)
+    print(token)
     if token is None:
         raise PermissionError(auth_response)
     return token.group(1)
 
 
 def convert_auth_token(id, secret, backend, token):
-    url = 'http://kiresuah.me/api/convert-token?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
+    url = 'http://kiresuah.me/api/convert-token/?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
         .format(PORT, 'convert_token', id, secret, backend, token)
     return requests.post(url).content
 
