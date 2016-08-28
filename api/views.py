@@ -15,7 +15,8 @@ from api.serializers import UserSerializer, GroupSerializer, ToDoSerializer, Mar
     PortfolioMessageSerializer, EntrySerializer, EntryWriteSerializer, TagSerializer
 from api.models import ToDo, Markup, PortfolioMessage, Entry, Tag
 
-from kiresuahapi.settings import SOCIAL_AUTH_GITHUB_KEY as github_id, SOCIAL_AUTH_GITHUB_SECRET as github_secret
+from kiresuahapi.settings import SOCIAL_AUTH_GITHUB_KEY as github_id, SOCIAL_AUTH_GITHUB_SECRET as github_secret, PORT
+
 
 
 def auth(request, code):
@@ -45,7 +46,7 @@ def revoke(request):
     access_token = request.GET.get('access_token', None)
     client_id = request.GET.get('client_id', None)
     if client_id is not None and access_token is not None:
-        url = 'http://localhost:8000/invalidate-sessions'
+        url = 'http://localhost:{}/invalidate-sessions'.format(PORT)
         data = {'client_id': client_id}
         headers = {'Authorization': 'Bearer {}'.format(access_token)}
         requests.post(url, data=data, headers=headers)
@@ -209,8 +210,8 @@ def github_auth(id, secret, code):
 
 
 def convert_auth_token(id, secret, backend, token):
-    url = 'http://localhost:8000/convert-token?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
-        .format('convert_token', id, secret, backend, token)
+    url = 'http://localhost:{}/convert-token?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
+        .format(PORT, 'convert_token', id, secret, backend, token)
     return requests.post(url).content
 
 def get_user_from_token(token, dict):
