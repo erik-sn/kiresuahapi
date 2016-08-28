@@ -63,7 +63,7 @@ class Entry(models.Model):
     description = models.TextField(blank=True, null=True, db_column='description')
     content = models.TextField(blank=True, null=True, db_column='content')
     tags = models.ManyToManyField('Tag', blank=True)
-    owner = models.ForeignKey(User, blank=False, null=False, db_column='owner')
+    owner = models.ForeignKey(User, blank=False, null=False, default=1, db_column='owner')
 
     class Meta:
         managed = True
