@@ -1,4 +1,5 @@
 from django.conf.urls import url, include
+from django.contrib import admin
 from api import views
 from rest_framework import routers
 
@@ -7,6 +8,7 @@ router.register(r'users', views.UserViewSet)
 router.register(r'groups', views.GroupViewSet)
 
 urlpatterns = [
+    url(r'^admin/', admin.site.urls),
     url(r'^', include(router.urls)),
 
     url(r'^(?i)login/(?P<code>[a-zA-z0-9]+)/$', views.auth, name='login'),
