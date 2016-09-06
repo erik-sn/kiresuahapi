@@ -4,7 +4,7 @@ import requests
 
 from django.contrib.auth.models import User, Group
 from django.http import HttpResponse
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,7 +12,7 @@ from rest_framework import status
 from oauth2_provider.models import AccessToken
 
 from api.serializers import UserSerializer, GroupSerializer, ToDoSerializer, MarkupSerializer, \
-    PortfolioMessageSerializer, EntrySerializer, EntryWriteSerializer, TagSerializer
+    PortfolioMessageSerializer, EntrySerializer, EntryWriteSerializer
 from api.models import ToDo, Markup, PortfolioMessage, Entry, Tag
 
 from kiresuahapi.settings import SOCIAL_AUTH_GITHUB_KEY as github_id, SOCIAL_AUTH_GITHUB_SECRET as github_secret, PORT
@@ -123,8 +123,12 @@ class EntryView(APIView):
             tag.save()
             return tag
 
-    def get(self, request, format=None):
+    def get(self, request, title=None, format=None):
         data = Entry.objects.all().order_by('-created')
+        if title is not None:
+            title = title.replace('_', ' ')
+            data = data.filter(title__iexact=title)
+            print(title)
         serializer = EntrySerializer(data, many=True)
         return Response(serializer.data)
 
