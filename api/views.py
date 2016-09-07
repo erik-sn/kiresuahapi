@@ -128,7 +128,6 @@ class EntryView(APIView):
         if title is not None:
             title = title.replace('_', ' ')
             data = data.filter(title__iexact=title)
-            print(title)
         serializer = EntrySerializer(data, many=True)
         return Response(serializer.data)
 
