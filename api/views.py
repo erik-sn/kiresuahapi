@@ -130,6 +130,7 @@ class EntryView(APIView):
 
         data = data.filter(Q(title__icontains=filter) |
                            Q(description__icontains=filter) |
+                           Q(tags__name__icontains=filter) |
                            Q(content__icontains=filter)) if filter is not None else data
 
 
