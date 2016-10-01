@@ -27,8 +27,15 @@ class MarkupSerializer(serializers.ModelSerializer):
         fields = ('id', 'title', 'description', 'text', 'created', 'user', 'modified')
 
 
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ('id', 'name')
+
+
 class EntrySerializer(serializers.ModelSerializer):
     owner = UserSerializer(many=False, read_only=True, context={'request': None})
+    tags = TagSerializer(many=True)
 
     class Meta:
         model = Entry
@@ -40,12 +47,6 @@ class EntryWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Entry
         fields = ('id', 'owner', 'created', 'modified', 'title', 'description', 'content', 'tags')
-
-
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tag
-        fields = ('id', 'created', 'modified', 'name')
 
 
 class PortfolioMessageSerializer(serializers.ModelSerializer):

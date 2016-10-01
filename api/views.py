@@ -127,16 +127,16 @@ class EntryView(APIView):
     def get(self, request, title=None, format=None):
         filter = request.GET.get('filter', None)
         data = Entry.objects.all().order_by('-created')
+        if title is not None:
+            title = title.replace('-', ' ')
+            data = data.filter(title__iexact=title)
+            serializer = EntrySerializer(data, many=True)
+            return Response(serializer.data)
 
         data = data.filter(Q(title__icontains=filter) |
                            Q(description__icontains=filter) |
                            Q(tags__name__icontains=filter) |
                            Q(content__icontains=filter)) if filter is not None else data
-
-
-        if title is not None:
-            title = title.replace('_', ' ')
-            data = data.filter(title__iexact=title)
         serializer = EntrySerializer(data, many=True)
         return Response(serializer.data)
 
