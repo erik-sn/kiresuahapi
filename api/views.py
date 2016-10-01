@@ -5,6 +5,7 @@ import requests
 from django.contrib.auth.models import User, Group
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
 from rest_framework import viewsets, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -15,7 +16,7 @@ from api.serializers import UserSerializer, GroupSerializer, ToDoSerializer, Mar
     PortfolioMessageSerializer, EntrySerializer, EntryWriteSerializer
 from api.models import ToDo, Markup, PortfolioMessage, Entry, Tag
 
-from kiresuahapi.settings import SOCIAL_AUTH_GITHUB_KEY as github_id, SOCIAL_AUTH_GITHUB_SECRET as github_secret, PORT
+from kiresuahapi.settings import SOCIAL_AUTH_GITHUB_KEY as github_id, SOCIAL_AUTH_GITHUB_SECRET as github_secret
 
 
 def auth(request, code):
@@ -50,7 +51,7 @@ def revoke(request):
     access_token = request.GET.get('access_token', None)
     client_id = request.GET.get('client_id', None)
     if client_id is not None and access_token is not None:
-        url = 'https://kiresuah.me/api/invalidate-sessions/'
+        url = 'https://devreduce.com/api/invalidate-sessions/'
         data = {'client_id': client_id}
         headers = {'Authorization': 'Bearer {}'.format(access_token)}
         requests.post(url, data=data, headers=headers)
@@ -124,7 +125,14 @@ class EntryView(APIView):
             return tag
 
     def get(self, request, title=None, format=None):
+        filter = request.GET.get('filter', None)
         data = Entry.objects.all().order_by('-created')
+
+        data = data.filter(Q(title__icontains=filter) |
+                           Q(description__icontains=filter) |
+                           Q(content__icontains=filter)) if filter is not None else data
+
+
         if title is not None:
             title = title.replace('_', ' ')
             data = data.filter(title__iexact=title)
@@ -210,16 +218,14 @@ def github_auth(id, secret, code):
         }),
         headers={'content-type': 'application/json'}
     ).content.decode('utf-8')
-    print(auth_response)
     token = re.search(r'access_token=([a-zA-Z0-9]+)', auth_response)
-    print(token)
     if token is None:
         raise PermissionError(auth_response)
     return token.group(1)
 
 
 def convert_auth_token(id, secret, backend, token):
-    url = 'https://kiresuah.me/api/convert-token/?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
+    url = 'https://devreduce.com/api/convert-token/?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
         .format('convert_token', id, secret, backend, token)
     return requests.post(url).content
 
