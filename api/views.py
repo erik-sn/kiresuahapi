@@ -16,14 +16,15 @@ from api.serializers import UserSerializer, GroupSerializer, ToDoSerializer, Mar
     PortfolioMessageSerializer, EntrySerializer, EntryWriteSerializer
 from api.models import ToDo, Markup, PortfolioMessage, Entry, Tag
 
-from kiresuahapi.settings import SOCIAL_AUTH_GITHUB_KEY as github_id, SOCIAL_AUTH_GITHUB_SECRET as github_secret
+from kiresuahapi.settings import SOCIAL_AUTH_GITHUB_KEY as github_id, SOCIAL_AUTH_GITHUB_SECRET as github_secret, DEBUG
 
 
 def auth(request, code):
     try:
         github_token = github_auth(github_id, github_secret, code)
         django_auth = json.loads(convert_auth_token(github_id, github_secret, 'github', github_token).decode('utf-8'))
-    except:
+    except Exception as e:
+        print(e)
         return HttpResponse(json.dumps({'error': 'cannot authenticate the user through github'}),
                             status=400, content_type="application/json")
     try:
@@ -125,8 +126,17 @@ class EntryView(APIView):
             return tag
 
     def get(self, request, title=None, format=None):
-        filter = request.GET.get('filter', None)
         data = Entry.objects.all().order_by('-created')
+
+        access_token = request.GET.get('access_token', None)
+        try:
+            user = User.objects.get(id=AccessToken.objects.get(token=access_token).user_id)
+            if not user.is_staff:
+                raise PermissionError('User is not authenticated or not staff')
+        except:
+            data = data.filter(published=True)
+
+        filter = request.GET.get('filter', None)
         if title is not None:
             title = title.replace('-', ' ')
             data = data.filter(title__iexact=title)
@@ -225,8 +235,10 @@ def github_auth(id, secret, code):
 
 
 def convert_auth_token(id, secret, backend, token):
-    url = 'https://devreduce.com/api/convert-token/?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
-        .format('convert_token', id, secret, backend, token)
+    host = 'http://localhost:8000' if DEBUG else 'https://devreduce.com'
+    url = '{}/api/convert-token/?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
+        .format(host, 'convert_token', id, secret, backend, token)
+    print(url)
     return requests.post(url).content
 
 

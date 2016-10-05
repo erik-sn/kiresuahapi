@@ -64,6 +64,7 @@ class Entry(models.Model):
     content = models.TextField(blank=True, null=True, db_column='content')
     tags = models.ManyToManyField('Tag', blank=True)
     owner = models.ForeignKey(User, blank=False, null=False, default=1, db_column='owner')
+    published = models.BooleanField(default=False, null=False)
 
     class Meta:
         managed = True
