@@ -83,8 +83,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': os.environ['POSTGRES_DB'],
-        'USER': os.environ['sboxapisuperuser'],
-        'PASSWORD': os.environ['TXCCm=KDU5TD&S%8M$juQjVC8X*EXV'],
+        'USER': os.environ['POSTGRES_USER'],
+        'PASSWORD': os.environ['POSTGRES_PASSWORD'],
         'HOST': 'localhost',
         'PORT': '5432',
         'CONN_MAX_AGE': 600
