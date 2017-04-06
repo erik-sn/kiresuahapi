@@ -2,8 +2,6 @@ from django.conf.urls import url, include
 from django.contrib import admin
 from api import views
 from rest_framework import routers
-from django.contrib.auth import views as auth_views
-from api import views as api_views
 
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet)
@@ -23,6 +21,4 @@ urlpatterns = [
 
     url(r'^(?i)articles/$', views.ArticleView.as_view(), name='article_list'),
     url(r'^(?i)articles/(?P<title>(.*?))/$', views.ArticleView.as_view(), name='article_title'),
-
-
 ]

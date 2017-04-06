@@ -9,7 +9,7 @@ from api.serializers import GroupSerializer, ArticleSerializer
 
 from rest_framework.response import Response
 
-from webapi.settings import SOCIAL_AUTH_GITHUB_KEY, SOCIAL_AUTH_GITHUB_SECRET, CLIENT_ID, CLIENT_SECRET
+from core.settings import SOCIAL_AUTH_GITHUB_KEY, SOCIAL_AUTH_GITHUB_SECRET, CLIENT_ID, CLIENT_SECRET
 from api.serializers import UserSerializer
 from api.oauth import generate_github_access_token, convert_to_auth_token, get_user_from_token
 
