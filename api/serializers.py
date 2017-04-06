@@ -1,12 +1,12 @@
 from django.contrib.auth.models import User, Group
-from api.models import ToDo, Markup, PortfolioMessage, Entry, Tag
+from api.models import Article, Tag
 from rest_framework import serializers
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'groups')
+        fields = ('id', 'username', 'email', 'is_staff', 'is_superuser', 'is_active')
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -15,41 +15,24 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = ('url', 'name')
 
 
-class ToDoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ToDo
-        fields = ('title', 'description', 'created', 'modified')
-
-
-class MarkupSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Markup
-        fields = ('id', 'title', 'description', 'text', 'created', 'user', 'modified')
-
-
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ('id', 'name')
 
 
-class EntrySerializer(serializers.ModelSerializer):
+class ArticleSerializer(serializers.ModelSerializer):
     owner = UserSerializer(many=False, read_only=True, context={'request': None})
     tags = TagSerializer(many=True)
 
     class Meta:
-        model = Entry
+        model = Article
         depth = 1
         fields = ('id', 'owner', 'created', 'modified', 'title', 'description', 'content', 'tags')
 
 
-class EntryWriteSerializer(serializers.ModelSerializer):
+class ArticleWriteSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Entry
+        model = Article
         fields = ('id', 'owner', 'created', 'modified', 'title', 'description', 'content', 'tags')
 
-
-class PortfolioMessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PortfolioMessage
-        fields = ('name', 'email', 'phoneNumber', 'message', 'created', 'modified')

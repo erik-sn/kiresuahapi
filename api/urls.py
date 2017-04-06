@@ -2,29 +2,27 @@ from django.conf.urls import url, include
 from django.contrib import admin
 from api import views
 from rest_framework import routers
+from django.contrib.auth import views as auth_views
+from api import views as api_views
 
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet)
 router.register(r'groups', views.GroupViewSet)
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
     url(r'^', include(router.urls)),
 
-    url(r'^(?i)login/(?P<code>[a-zA-z0-9]+)/$', views.auth, name='login'),
-    url(r'^(?i)logout/$', views.revoke, name='logout'),
+    # authentication
+    url(r'^(?i)login/(?P<code>[a-zA-z0-9]+)/$', views.authenticate, name='login'),
+    url(r'^(?i)refresh/(?P<refresh_token>[a-zA-z0-9]+)/$', views.refresh_access_token, name='logout'),
+    url(r'^(?i)logout/(?P<access_token>[a-zA-z0-9]+)/$', views.revoke_access_token, name='logout'),
+    url(r'^auth/', include('rest_framework_social_oauth2.urls')),
 
-    url(r'^(?i)todo/$', views.ToDoList.as_view()),
-    url(r'^(?i)todo/(?P<pk>[0-9]+)/$', views.ToDoDetail.as_view()),
+    url(r'^admin/', admin.site.urls),
 
-    url(r'^(?i)markup/(?P<id>[0-9]+)/$', views.MarkupList.as_view(), name='markup_list'),
-    url(r'^(?i)markup/(?P<id>[0-9]+)/(?P<pk>[0-9]+)/$', views.MarkupDetail.as_view(), name='markup_get_post_put'),
 
-    url(r'^(?i)entry/$', views.EntryView.as_view(), name='entry_list'),
-    url(r'^(?i)entry/(?P<title>(.*?))/$', views.EntryView.as_view(), name='entry_list'),
+    url(r'^(?i)articles/$', views.ArticleView.as_view(), name='article_list'),
+    url(r'^(?i)articles/(?P<title>(.*?))/$', views.ArticleView.as_view(), name='article_title'),
 
-    url(r'^(?i)message/$', views.PortFolioMessageList.as_view(), name='message_list'),
-
-    url('', include('rest_framework_social_oauth2.urls')),
 
 ]

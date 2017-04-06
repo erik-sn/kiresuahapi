@@ -1,116 +1,68 @@
-import json
-import re
 import requests
 
 from django.contrib.auth.models import User, Group
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Q
 from rest_framework import viewsets, generics
-from rest_framework.views import APIView
+from rest_framework.decorators import api_view
+
+from api.models import Article, Tag
+from api.serializers import GroupSerializer, ArticleSerializer
+
 from rest_framework.response import Response
-from rest_framework import status
-from oauth2_provider.models import AccessToken
 
-from api.serializers import UserSerializer, GroupSerializer, ToDoSerializer, MarkupSerializer, \
-    PortfolioMessageSerializer, EntrySerializer, EntryWriteSerializer
-from api.models import ToDo, Markup, PortfolioMessage, Entry, Tag
-
-from kiresuahapi.settings import SOCIAL_AUTH_GITHUB_KEY as github_id, SOCIAL_AUTH_GITHUB_SECRET as github_secret, DEBUG
+from webapi.settings import SOCIAL_AUTH_GITHUB_KEY, SOCIAL_AUTH_GITHUB_SECRET, CLIENT_ID, CLIENT_SECRET
+from api.serializers import UserSerializer
+from api.oauth import generate_github_access_token, convert_to_auth_token, get_user_from_token
 
 
-def auth(request, code):
-    try:
-        github_token = github_auth(github_id, github_secret, code)
-        django_auth = json.loads(convert_auth_token(github_id, github_secret, 'github', github_token).decode('utf-8'))
-    except Exception as e:
-        print(e)
-        return HttpResponse(json.dumps({'error': 'cannot authenticate the user through github'}),
-                            status=400, content_type="application/json")
-    try:
-        user = User.objects.get(id=AccessToken.objects.get(token=django_auth['access_token']).user_id)
-        django_auth['id'] = user.id
-        django_auth['username'] = user.username
-        django_auth['email'] = user.email
-        django_auth['isAdmin'] = user.is_staff
-    except:
-        django_auth['id'] = None
-        django_auth['username'] = None
-        django_auth['email'] = None
-        django_auth['isAdmin'] = False
-    return HttpResponse(json.dumps(django_auth), content_type="application/json")
+@api_view(['POST'])
+def authenticate(request, code):
+    github_token = generate_github_access_token(SOCIAL_AUTH_GITHUB_KEY, SOCIAL_AUTH_GITHUB_SECRET, code)
+    django_auth_token = convert_to_auth_token(CLIENT_ID, CLIENT_SECRET, 'github', github_token)
+    user = get_user_from_token(django_auth_token)
+    return Response({'token': django_auth_token, 'user': UserSerializer(user).data}, status=200)
 
 
-@csrf_exempt
-def revoke(request):
+@api_view(['POST'])
+def revoke_access_token(request, access_token):
     """
     Given an access token, revoke that token and all other tokens associated with the user
     :param request: HTTP request containing client_id and access_token
     :return: JSON data indicating success or failure
     """
-
-    access_token = request.GET.get('access_token', None)
-    client_id = request.GET.get('client_id', None)
-    if client_id is not None and access_token is not None:
-        url = 'https://devreduce.com/api/invalidate-sessions/'
-        data = {'client_id': client_id}
-        headers = {'Authorization': 'Bearer {}'.format(access_token)}
-        requests.post(url, data=data, headers=headers)
-        return HttpResponse(json.dumps({'message': 'User successfully logged out'}),
-                        status=200, content_type="application/json")
-    return HttpResponse(json.dumps({'error': 'client_id and access_token are required parameters'}),
-                        status=400, content_type="application/json")
+    url = 'http://localhost:8000/api/auth/invalidate-sessions/'
+    data = {
+        'client_id': CLIENT_ID,
+    }
+    headers = {'Authorization': 'Bearer {}'.format(access_token)}
+    requests.post(url, data=data, headers=headers)
+    return Response({'message': 'User successfully logged out'}, status=200)
 
 
-class ToDoList(generics.ListCreateAPIView):
+@api_view(['POST'])
+def refresh_access_token(request, refresh_token):
     """
-    Method to handle requests with no pk specified:
-        1. POST - insert an object
-        2. GET - retrieve a list of objects
+    Given an access token, revoke that token and all other tokens associated with the user
+    :param request: HTTP request containing client_id and access_token
+    :return: JSON data indicating success or failure
     """
-    queryset = ToDo.objects.all()
-    serializer_class = ToDoSerializer
+    url = 'http://localhost:8000/api/auth/token/'
+    params = {
+        'grant_type': 'refresh_token',
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET,
+        'refresh_token': refresh_token,
+    }
+    response = requests.post(url, params=params)
+    response_dict = response.json()
+    if response.status_code == 401:
+        return Response(response_dict, status=401)
+    user = get_user_from_token(response_dict)
+    return Response({'token': response_dict, 'user': UserSerializer(user).data}, status=200)
 
 
-class ToDoDetail(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Method to handle requests with a pk specified:
-        1. GET - one object
-        2. PUT - Inserts/Updates another object
-        3. DELETE - deletes one object
-    """
-    queryset = ToDo.objects.all()
-    serializer_class = ToDoSerializer
-
-
-class MarkupList(generics.ListCreateAPIView):
-    """
-    Method to handle requests with no pk specified:
-        1. POST - insert an object
-        2. GET - retrieve a list of objects
-    """
-    def get_queryset(self):
-        return Markup.objects.all().filter(user=self.kwargs['id']).order_by('-created')
-    serializer_class = MarkupSerializer
-
-
-class MarkupDetail(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Method to handle requests with a pk specified:
-        1. GET - one object
-        2. PUT - Inserts/Updates another object
-        3. DELETE - deletes one object
-    """
-    queryset = Markup.objects.all()
-    serializer_class = MarkupSerializer
-
-
-class EntryView(APIView):
-    """
-    Handling MSLT entries
-    """
-    # defining queryset is necessary for Django model permissions
-    queryset = Entry.objects.none()
+class ArticleView(generics.ListCreateAPIView, generics.UpdateAPIView):
+    queryset = Article.objects.all().order_by('-created')
+    serializer_class = ArticleSerializer
 
     def get_tag(self, name):
         """
@@ -125,69 +77,30 @@ class EntryView(APIView):
             tag.save()
             return tag
 
-    def get(self, request, title=None, format=None):
-        data = Entry.objects.all().order_by('-created')
+    # def post(self, request, format=None):
+    #     data = request.data
+    #     if 'id' not in data or 'tags' not in data:
+    #         return Response({'error': 'The put request is malformed - id is a required field'}, status=status.HTTP_400_BAD_REQUEST)
+    #     # convert array of tag strings into tag id's
+    #     data['tags'] = [self.get_tag(tag).id for tag in data['tags']]
+    #     serializer = EntryWriteSerializer(data=data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        access_token = request.GET.get('access_token', None)
-        try:
-            user = User.objects.get(id=AccessToken.objects.get(token=access_token).user_id)
-            if not user.is_staff:
-                raise PermissionError('User is not authenticated or not staff')
-        except:
-            data = data.filter(published=True)
-
-        filter = request.GET.get('filter', None)
-        if title is not None:
-            title = title.replace('-', ' ')
-            data = data.filter(title__iexact=title)
-            serializer = EntrySerializer(data, many=True)
-            return Response(serializer.data)
-
-        data = data.filter(Q(title__icontains=filter) |
-                           Q(description__icontains=filter) |
-                           Q(content__icontains=filter)) if filter is not None else data
-        serializer = EntrySerializer(data, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, format=None):
-        data = request.data
-        if 'id' not in data or 'tags' not in data:
-            return Response({'error': 'The put request is malformed - id is a required field'}, status=status.HTTP_400_BAD_REQUEST)
-        # convert array of tag strings into tag id's
-        data['tags'] = [self.get_tag(tag).id for tag in data['tags']]
-        serializer = EntryWriteSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request, format=None):
-        data = request.data
-        if 'id' not in data or 'tags' not in data:
-            return Response({'error': 'The put request is malformed - id is a required field'}, status=status.HTTP_400_BAD_REQUEST)
-        # convert array of tag strings into tag id's
-        data['tags'] = [self.get_tag(tag).id for tag in data['tags']] if 'tags' in data else []
-        entry = Entry.objects.get(id=data['id'])
-        serializer = EntryWriteSerializer(entry, data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, format=None):
-        entry = Entry.objects.get(id=request.data['id'])
-        entry.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class PortFolioMessageList(generics.ListCreateAPIView):
-    """
-    Method to handle requests with no pk specified:
-        1. POST - insert an object
-        2. GET - retrieve a list of objects
-    """
-    queryset = PortfolioMessage.objects.all()
-    serializer_class = PortfolioMessageSerializer
+    # def put(self, request, format=None):
+    #     data = request.data
+    #     if 'id' not in data or 'tags' not in data:
+    #         return Response({'error': 'The put request is malformed - id is a required field'}, status=status.HTTP_400_BAD_REQUEST)
+    #     # convert array of tag strings into tag id's
+    #     data['tags'] = [self.get_tag(tag).id for tag in data['tags']] if 'tags' in data else []
+    #     entry = Entry.objects.get(id=data['id'])
+    #     serializer = EntryWriteSerializer(entry, data=data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -205,42 +118,3 @@ class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
 
-
-def github_auth(id, secret, code):
-    """
-    Part of the Github OAuth workflow - a code is generated by github and sent to the client,
-    the client then sends that code here. It is combined with application specific codes and
-    then sent to github to retrieve an access token. Then that access token is used to retrieve
-    data about the user through the github API. The API data is then returned as JSON back to the
-    client.
-    :param id: client_id specific to an application
-    :param secret: client_secret specific to an application
-    :param code: temporary code related to a specific user from github
-    :return: json data on user's api
-    """
-    # try:
-    auth_response = requests.post(
-        'https://github.com/login/oauth/access_token/',
-        data=json.dumps({
-            'client_id': id,
-            'client_secret': secret,
-            'code': code
-        }),
-        headers={'content-type': 'application/json'}
-    ).content.decode('utf-8')
-    token = re.search(r'access_token=([a-zA-Z0-9]+)', auth_response)
-    if token is None:
-        raise PermissionError(auth_response)
-    return token.group(1)
-
-
-def convert_auth_token(id, secret, backend, token):
-    host = 'http://localhost:8000' if DEBUG else 'https://devreduce.com'
-    url = '{}/api/convert-token/?grant_type={}&client_id={}&client_secret={}&backend={}&token={}'\
-        .format(host, 'convert_token', id, secret, backend, token)
-    print(url)
-    return requests.post(url).content
-
-
-def get_user_from_token(token):
-    return User.objects.get(id=AccessToken.objects.get(token=token).user_id)
