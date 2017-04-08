@@ -60,7 +60,7 @@ def refresh_access_token(request, refresh_token):
     return Response({'token': response_dict, 'user': UserSerializer(user).data}, status=200)
 
 
-class ArticleView(generics.ListCreateAPIView, generics.UpdateAPIView):
+class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Article.objects.all().order_by('-created')
     serializer_class = ArticleSerializer
 
@@ -76,6 +76,11 @@ class ArticleView(generics.ListCreateAPIView, generics.UpdateAPIView):
             tag = Tag.objects.create(name=name)
             tag.save()
             return tag
+
+    def list(self, request, **kwargs):
+        serializer = self.serializer_class(self.queryset, many=True)
+        return Response(serializer.data, 200)
+
 
     # def post(self, request, format=None):
     #     data = request.data

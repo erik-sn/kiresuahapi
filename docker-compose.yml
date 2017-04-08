@@ -3,14 +3,14 @@ services:
   db:
     image: postgres
     volumes:
-      - data:/var/postgresql/data/
+      - data:/data/db
     ports:
       - "5432:5432"
     env_file:
       - .env
-  web:
+  api:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python run_server.py
     volumes:
       - .:/project
     ports:
@@ -21,4 +21,5 @@ services:
       - .env
 volumes:
   data:
-    external: True
+    external:
+      name: "sandbox"

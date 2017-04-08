@@ -1,7 +1,5 @@
 FROM python:3.6
 ENV PYTHONUNBUFFERED 1
-ENV DEBUG True
-ENV DOCKER_HOST True
 RUN mkdir /project
 WORKDIR /project
 RUN apt-get update

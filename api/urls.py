@@ -6,6 +6,7 @@ from rest_framework import routers
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet)
 router.register(r'groups', views.GroupViewSet)
+router.register(r'articles', views.ArticleViewSet)
 
 urlpatterns = [
     url(r'^', include(router.urls)),
@@ -19,6 +20,6 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
 
 
-    url(r'^(?i)articles/$', views.ArticleView.as_view(), name='article_list'),
-    url(r'^(?i)articles/(?P<title>(.*?))/$', views.ArticleView.as_view(), name='article_title'),
+    url(r'^(?i)articles/$', views.ArticleViewSet, name='article_list'),
+    url(r'^(?i)articles/(?P<title>(.*?))/$', views.ArticleViewSet, name='article_title'),
 ]
