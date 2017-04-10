@@ -138,6 +138,12 @@ STATIC_URL = '/static/'
 # cors configuration
 CORS_ORIGIN_WHITELIST = (
     'localhost:3000',
+    'localhost:4000',
+    'localhost:4001',
+    'localhost:4002',
+    'localhost:4003',
+    'localhost:4004',
+    'localhost:4005',
     'localhost:8000',
 )
 
@@ -156,7 +162,7 @@ REST_FRAMEWORK = {
         'rest_framework_social_oauth2.authentication.SocialAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.DjangoModelPermissions',
     ),
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',

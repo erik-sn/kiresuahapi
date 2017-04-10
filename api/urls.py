@@ -7,6 +7,7 @@ router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet)
 router.register(r'groups', views.GroupViewSet)
 router.register(r'articles', views.ArticleViewSet)
+router.register(r'tags', views.TagViewSet)
 
 urlpatterns = [
     url(r'^', include(router.urls)),
@@ -21,5 +22,7 @@ urlpatterns = [
 
 
     url(r'^(?i)articles/$', views.ArticleViewSet, name='article_list'),
-    url(r'^(?i)articles/(?P<title>(.*?))/$', views.ArticleViewSet, name='article_title'),
+    url(r'^(?i)articles/(?P<url_title>(.*?))/$', views.ArticleViewSet, name='article_title'),
+
+    url(r'^(?i)tags/$', views.TagViewSet, name='tag_list'),
 ]

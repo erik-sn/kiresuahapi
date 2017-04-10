@@ -1,11 +1,14 @@
 import requests
+import re
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User, Group
-from rest_framework import viewsets, generics
-from rest_framework.decorators import api_view
+from rest_framework import viewsets
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly, AllowAny, IsAuthenticated
 
 from api.models import Article, Tag
-from api.serializers import GroupSerializer, ArticleSerializer
+from api.serializers import GroupSerializer, ArticleSerializer, ArticleWriteSerializer, TagSerializer
 
 from rest_framework.response import Response
 
@@ -15,6 +18,7 @@ from api.oauth import generate_github_access_token, convert_to_auth_token, get_u
 
 
 @api_view(['POST'])
+@permission_classes((AllowAny, ))
 def authenticate(request, code):
     github_token = generate_github_access_token(SOCIAL_AUTH_GITHUB_KEY, SOCIAL_AUTH_GITHUB_SECRET, code)
     django_auth_token = convert_to_auth_token(CLIENT_ID, CLIENT_SECRET, 'github', github_token)
@@ -23,6 +27,7 @@ def authenticate(request, code):
 
 
 @api_view(['POST'])
+@permission_classes((IsAuthenticated, ))
 def revoke_access_token(request, access_token):
     """
     Given an access token, revoke that token and all other tokens associated with the user
@@ -39,6 +44,7 @@ def revoke_access_token(request, access_token):
 
 
 @api_view(['POST'])
+@permission_classes((IsAuthenticated, ))
 def refresh_access_token(request, refresh_token):
     """
     Given an access token, revoke that token and all other tokens associated with the user
@@ -60,52 +66,89 @@ def refresh_access_token(request, refresh_token):
     return Response({'token': response_dict, 'user': UserSerializer(user).data}, status=200)
 
 
-class ArticleViewSet(viewsets.ModelViewSet):
-    queryset = Article.objects.all().order_by('-created')
-    serializer_class = ArticleSerializer
 
-    def get_tag(self, name):
+class ArticleViewSet(viewsets.ModelViewSet):
+    queryset = Article.objects.none()
+    permission_classes = (DjangoModelPermissionsOrAnonReadOnly, )
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        return Article.objects.all().order_by('-created')
+
+    @staticmethod
+    def clean_title(title):
+        removed_spaces = title.lower().replace(' ', '-')
+        url_title = re.sub('[^0-9a-zA-Z\-]+', '', removed_spaces)
+        return url_title
+
+    def get_serializer_class(self):
+        if self.request.method in ['POST', 'PUT']:
+            return ArticleWriteSerializer
+        return ArticleSerializer
+
+    def get_tag(self, tag):
         """
         return the tag object given a tag name - if it does not exist then create it
         :param name: tag name
         :return: Tag object
         """
         try:
-            return Tag.objects.get(name=name)
-        except:
-            tag = Tag.objects.create(name=name)
+            return Tag.objects.get(name=tag['name'])
+        except ObjectDoesNotExist:
+            tag = Tag(name=tag['name'])
             tag.save()
             return tag
 
+    def retrieve(self, request, id=None, **kwargs):
+        try:
+            article = Article.objects.get(id=id)
+            return Response(self.get_serializer_class()(article, context={'request': request}).data)
+        except ObjectDoesNotExist:
+            return Response(status=404)
+
     def list(self, request, **kwargs):
-        serializer = self.serializer_class(self.queryset, many=True)
+        articles = Article.objects.all().order_by('-created')
+        serializer = self.get_serializer_class()(articles, many=True, context={'request': request})
         return Response(serializer.data, 200)
 
+    def create(self, request, **kwargs):
+        data = request.data
+        if 'tags' not in data:
+            return Response({'detail': 'tags: This field is required'}, 400)
+        if 'title' not in data:
+            return Response({'detail': 'title: This field is required'}, 400)
 
-    # def post(self, request, format=None):
-    #     data = request.data
-    #     if 'id' not in data or 'tags' not in data:
-    #         return Response({'error': 'The put request is malformed - id is a required field'}, status=status.HTTP_400_BAD_REQUEST)
-    #     # convert array of tag strings into tag id's
-    #     data['tags'] = [self.get_tag(tag).id for tag in data['tags']]
-    #     serializer = EntryWriteSerializer(data=data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # convert array of tag strings into tag id's
+        data['tags'] = [self.get_tag(tag).id for tag in data['tags']]
+        data['url_title'] = self.clean_title(data['title'])
+        serializer = self.get_serializer_class()(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, 201)
+        return Response(serializer.errors, status=400)
 
-    # def put(self, request, format=None):
-    #     data = request.data
-    #     if 'id' not in data or 'tags' not in data:
-    #         return Response({'error': 'The put request is malformed - id is a required field'}, status=status.HTTP_400_BAD_REQUEST)
-    #     # convert array of tag strings into tag id's
-    #     data['tags'] = [self.get_tag(tag).id for tag in data['tags']] if 'tags' in data else []
-    #     entry = Entry.objects.get(id=data['id'])
-    #     serializer = EntryWriteSerializer(entry, data=data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def update(self, request, id=None, **kwargs):
+        data = request.data
+        if 'tags' not in data:
+            return Response({'detail': 'tags: This field is required'}, 400)
+        if 'title' not in data:
+            return Response({'detail': 'title: This field is required'}, 400)
+
+        # convert array of tag strings into tag id's
+        data['tags'] = [self.get_tag(tag).id for tag in data['tags']]
+        data['url_title'] = self.clean_title(data['title'])
+        article = Article.objects.get(id=id)
+        serializer = self.get_serializer_class()(article, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all().order_by('-created')
+    serializer_class = TagSerializer
+    permission_classes = (DjangoModelPermissionsOrAnonReadOnly, )
 
 
 class UserViewSet(viewsets.ModelViewSet):
