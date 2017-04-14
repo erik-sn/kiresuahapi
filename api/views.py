@@ -1,8 +1,10 @@
 import requests
 import re
+from itertools import chain
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User, Group
+from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly, AllowAny, IsAuthenticated
@@ -66,11 +68,20 @@ def refresh_access_token(request, refresh_token):
     return Response({'token': response_dict, 'user': UserSerializer(user).data}, status=200)
 
 
+@api_view(['GET'])
+@permission_classes((AllowAny, ))
+def search_articles_tags(request, search_term):
+    articles = Article.objects.filter(Q(title__icontains=search_term) |
+                                      Q(description__icontains=search_term) |
+                                      Q(tags__name__icontains=search_term))
+    article_serializer = ArticleSerializer(articles, many=True, context={'request': request})
+    return Response(article_serializer.data, 200)
+
 
 class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Article.objects.none()
     permission_classes = (DjangoModelPermissionsOrAnonReadOnly, )
-    lookup_field = 'id'
+    lookup_field = 'url_title'
 
     def get_queryset(self):
         return Article.objects.all().order_by('-created')
@@ -99,15 +110,24 @@ class ArticleViewSet(viewsets.ModelViewSet):
             tag.save()
             return tag
 
-    def retrieve(self, request, id=None, **kwargs):
+    def retrieve(self, request, url_title=None, **kwargs):
         try:
-            article = Article.objects.get(id=id)
+            article = Article.objects.get(url_title=url_title)
             return Response(self.get_serializer_class()(article, context={'request': request}).data)
         except ObjectDoesNotExist:
             return Response(status=404)
 
     def list(self, request, **kwargs):
         articles = Article.objects.all().order_by('-created')
+
+        search_term = request.GET.get('search', None)
+        if search_term:
+            article_list = articles.filter(Q(title__icontains=search_term) |
+                                           Q(description__icontains=search_term) |
+                                           Q(tags__name__icontains=search_term))
+            article_dict = {a.title: a for a in article_list}  # remove duplicates from tag join
+            articles = list(article_dict.values())
+
         serializer = self.get_serializer_class()(articles, many=True, context={'request': request})
         return Response(serializer.data, 200)
 

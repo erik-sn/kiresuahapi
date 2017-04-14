@@ -20,7 +20,7 @@ urlpatterns = [
 
     url(r'^admin/', admin.site.urls),
 
-
+    url(r'^(?i)search/(?P<search_term>[a-zA-z0-9]+)/$', views.search_articles_tags, name='search'),
     url(r'^(?i)articles/$', views.ArticleViewSet, name='article_list'),
     url(r'^(?i)articles/(?P<url_title>(.*?))/$', views.ArticleViewSet, name='article_title'),
 

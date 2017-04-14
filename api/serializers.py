@@ -31,7 +31,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         request = self.context['request']
         return reverse(
             viewname='article_title',
-            args=[article.id],
+            args=[article.url_title],
             request=request)
 
     class Meta:
