@@ -19,6 +19,26 @@ services:
       - db
     env_file:
       - .env
+  nginx:
+    restart: always
+    build: ./nginx/
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /www/static
+    depends_on:
+      - api
+  sandbox:
+    restart: always
+    build: ./sandbox/
+    command: npm run start
+    volumes:
+      - /sandbox
+    ports:
+      - "4000"
+    depends_on:
+      - api
 volumes:
   data:
     external:

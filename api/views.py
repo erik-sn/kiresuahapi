@@ -118,7 +118,9 @@ class ArticleViewSet(viewsets.ModelViewSet):
             return Response(status=404)
 
     def list(self, request, **kwargs):
-        articles = Article.objects.all().order_by('-created')
+        articles = Article.objects.order_by('-created')
+        if not request.user.is_staff:
+            articles = articles.filter(published=True)
 
         search_term = request.GET.get('search', None)
         if search_term:

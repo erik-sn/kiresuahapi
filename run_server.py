@@ -20,4 +20,5 @@ if __name__ == "__main__":
         sleep(2)
 
     print('Database is available - Starting Django Server')
+    ManagementUtility(['django', 'migrate']).execute()
     ManagementUtility(['staticfiles', 'runserver', '0.0.0.0:8000']).execute()

@@ -11,6 +11,8 @@ class Article(models.Model):
     text = models.TextField(blank=True, null=False)
     tags = models.ManyToManyField('Tag', blank=True)
     owner = models.ForeignKey(User, blank=False, null=False)
+    published = models.BooleanField(default=False, null=False, blank=False)
+
 
 class Tag(models.Model):
     created = models.DateTimeField(auto_now_add=True, blank=False, null=False)

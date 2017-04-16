@@ -9,3 +9,6 @@ venv
 
 ;;directories to ignore
 .idea/
+
+;; client side applications
+sandbox

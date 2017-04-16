@@ -38,7 +38,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         model = Article
         depth = 1
         fields = ('id', 'created', 'modified', 'title', 'text', 'url_title',
-                  'description', 'tags', 'url')
+                  'published', 'description', 'tags', 'url')
 
 
 class ArticleWriteSerializer(serializers.ModelSerializer):
@@ -46,4 +46,4 @@ class ArticleWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = ('id', 'owner', 'title', 'text', 'url_title', 'description',
-                  'tags')
+                  'published', 'tags')
