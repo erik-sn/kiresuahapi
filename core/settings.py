@@ -131,12 +131,13 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
-
-STATIC_URL = '/static/'
+STATIC_ROOT = '/opt/assets/'
+STATIC_URL = '/assets/'
 
 
 # cors configuration
 CORS_ORIGIN_WHITELIST = (
+    '159.203.99.200',
     'localhost:3000',
     'localhost:4000',
     'localhost:4001',

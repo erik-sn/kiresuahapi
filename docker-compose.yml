@@ -10,7 +10,7 @@ services:
       - .env
   api:
     build: .
-    command: python run_server.py
+    command: bash -c "python manage.py makemigrations && python manage.py migrate && gunicorn core.wsgi -b 0.0.0.0:8000"
     volumes:
       - .:/project
     ports:
@@ -26,7 +26,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /www/static
+      - /opt/assets:/www/assets
     depends_on:
       - api
   sandbox:
