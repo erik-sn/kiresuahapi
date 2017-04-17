@@ -19,16 +19,6 @@ services:
       - db
     env_file:
       - .env
-  nginx:
-    restart: always
-    build: ./nginx/
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /opt/assets:/www/assets
-    depends_on:
-      - api
   sandbox:
     restart: always
     build: ./sandbox/
@@ -36,7 +26,7 @@ services:
     volumes:
       - /sandbox
     ports:
-      - "4000"
+      - "4000:4000"
     depends_on:
       - api
 volumes:
