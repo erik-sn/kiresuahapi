@@ -10,7 +10,7 @@ services:
       - .env
   api:
     build: .
-    command: bash -c "python manage.py makemigrations && python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "python manage.py makemigrations && gunicorn --workers=3 --timeout=120 -k gevent --log-level=DEBUG core.wsgi -b 0.0.0.0:8000"
     volumes:
       - .:/project
     ports:
