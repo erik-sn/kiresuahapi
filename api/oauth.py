@@ -47,7 +47,7 @@ def convert_to_auth_token(client_id, client_secret, backend, token):
         'backend': backend,
         'token': token,
     }
-    response = requests.post('http://localhost:8000/api/auth/convert-token/', params=params)
+    response = requests.post('https://devsandbox.io/api/auth/convert-token/', params=params)
     print(response.content)
     return response.json()
 
