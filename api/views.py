@@ -1,6 +1,5 @@
 import requests
 import re
-from itertools import chain
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User, Group
@@ -14,7 +13,8 @@ from api.serializers import GroupSerializer, ArticleSerializer, ArticleWriteSeri
 
 from rest_framework.response import Response
 
-from core.settings import SOCIAL_AUTH_GITHUB_KEY, SOCIAL_AUTH_GITHUB_SECRET, CLIENT_ID, CLIENT_SECRET
+from core.settings import SOCIAL_AUTH_GITHUB_KEY, SOCIAL_AUTH_GITHUB_SECRET, CLIENT_ID,\
+    CLIENT_SECRET, BASE_URL
 from api.serializers import UserSerializer
 from api.oauth import generate_github_access_token, convert_to_auth_token, get_user_from_token
 
@@ -36,7 +36,7 @@ def revoke_access_token(request, access_token):
     :param request: HTTP request containing client_id and access_token
     :return: JSON data indicating success or failure
     """
-    url = 'https://devsandbox.io/api/auth/invalidate-sessions/'
+    url = '{}/api/auth/invalidate-sessions/'.format(BASE_URL)
     data = {
         'client_id': CLIENT_ID,
     }
@@ -53,7 +53,7 @@ def refresh_access_token(request, refresh_token):
     :param request: HTTP request containing client_id and access_token
     :return: JSON data indicating success or failure
     """
-    url = 'https://devsandbox.io/api/auth/token/'
+    url = '{}/api/auth/token/'.format(BASE_URL)
     params = {
         'grant_type': 'refresh_token',
         'client_id': CLIENT_ID,
@@ -81,7 +81,6 @@ def search_articles_tags(request, search_term):
 class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Article.objects.none()
     permission_classes = (DjangoModelPermissionsOrAnonReadOnly, )
-    lookup_field = 'url_title'
 
     def get_queryset(self):
         return Article.objects.all().order_by('-created')
@@ -110,9 +109,9 @@ class ArticleViewSet(viewsets.ModelViewSet):
             tag.save()
             return tag
 
-    def retrieve(self, request, url_title=None, **kwargs):
+    def retrieve(self, request, pk=None, **kwargs):
         try:
-            article = Article.objects.get(url_title=url_title)
+            article = Article.objects.get(url_title=pk)
             return Response(self.get_serializer_class()(article, context={'request': request}).data)
         except ObjectDoesNotExist:
             return Response(status=404)
@@ -149,7 +148,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, 201)
         return Response(serializer.errors, status=400)
 
-    def update(self, request, id=None, **kwargs):
+    def update(self, request, pk=None, **kwargs):
         data = request.data
         if 'tags' not in data:
             return Response({'detail': 'tags: This field is required'}, 400)
@@ -159,7 +158,12 @@ class ArticleViewSet(viewsets.ModelViewSet):
         # convert array of tag strings into tag id's
         data['tags'] = [self.get_tag(tag).id for tag in data['tags']]
         data['url_title'] = self.clean_title(data['title'])
-        article = Article.objects.get(id=id)
+
+        try:
+            article = Article.objects.get(id=pk)
+        except ObjectDoesNotExist:
+            return Response({'detail': 'Could not find article with id {}'.format(id)}, 400)
+
         serializer = self.get_serializer_class()(article, data=data)
         if serializer.is_valid():
             serializer.save()

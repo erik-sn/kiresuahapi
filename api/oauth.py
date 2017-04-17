@@ -5,6 +5,8 @@ import json
 from django.contrib.auth.models import User
 from oauth2_provider.models import AccessToken
 
+from core.settings import BASE_URL
+
 
 def generate_github_access_token(github_client_id, github_client_secret, github_code):
     """
@@ -47,8 +49,7 @@ def convert_to_auth_token(client_id, client_secret, backend, token):
         'backend': backend,
         'token': token,
     }
-    response = requests.post('https://devsandbox.io/api/auth/convert-token/', params=params)
-    print(response.content)
+    response = requests.post('{}/api/auth/convert-token/'.format(BASE_URL), params=params)
     return response.json()
 
 
