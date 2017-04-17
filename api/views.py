@@ -36,7 +36,7 @@ def revoke_access_token(request, access_token):
     :param request: HTTP request containing client_id and access_token
     :return: JSON data indicating success or failure
     """
-    url = 'http://localhost:8000/api/auth/invalidate-sessions/'
+    url = 'https://devsandbox.io/api/auth/invalidate-sessions/'
     data = {
         'client_id': CLIENT_ID,
     }
@@ -53,7 +53,7 @@ def refresh_access_token(request, refresh_token):
     :param request: HTTP request containing client_id and access_token
     :return: JSON data indicating success or failure
     """
-    url = 'http://localhost:8000/api/auth/token/'
+    url = 'https://devsandbox.io/api/auth/token/'
     params = {
         'grant_type': 'refresh_token',
         'client_id': CLIENT_ID,
