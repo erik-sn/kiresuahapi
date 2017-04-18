@@ -1,2 +1,3 @@
-# kiresuahapi
-Django API to support applications hosted on kiresuah.me
+# sandboxapi
+
+Django API to support applications hosted on devsandbox.io
